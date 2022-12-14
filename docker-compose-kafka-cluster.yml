@@ -1,6 +1,100 @@
 version: '3'
 
 services:
+  filebeat:
+    build:
+      context: ./docker-elk/extensions/filebeat/
+      args:
+        ELASTIC_VERSION: 8.5.2
+    user: root
+    command:
+      - -e
+      - --strict.perms=false
+    volumes:
+      - ./docker-elk/extensions/filebeat/config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro,Z
+      - type: bind
+        source: /var/lib/docker/containers
+        target: /var/lib/docker/containers
+        read_only: true
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: true
+    environment:
+      FILEBEAT_INTERNAL_PASSWORD: ${FILEBEAT_INTERNAL_PASSWORD:-}
+      BEATS_SYSTEM_PASSWORD: ${BEATS_SYSTEM_PASSWORD:-}
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    build:
+      context: ./docker-elk/elasticsearch/
+      args:
+        ELASTIC_VERSION: 8.5.2
+    volumes:
+      - type: bind
+        source: ./docker-elk/elasticsearch/config/elasticsearch.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+        read_only: true
+      - type: volume
+        source: elasticsearch
+        target: /usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      # Bootstrap password.
+      # Used to initialize the keystore during the initial startup of
+      # Elasticsearch. Ignored on subsequent runs.
+      ELASTIC_PASSWORD: changeme
+      ELASTIC_USERNAME: elastic
+      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
+      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
+      discovery.type: single-node
+
+  logstash:
+    build:
+      context: ./docker-elk/logstash/
+      args:
+        ELASTIC_VERSION: 8.5.2
+    volumes:
+      - type: bind
+        source: ./docker-elk/logstash/config/logstash.yml
+        target: /usr/share/logstash/config/logstash.yml
+        read_only: true
+      - type: bind
+        source: ./docker-elk/logstash/pipeline/
+        target: /usr/share/logstash/pipeline/
+        read_only: true
+    ports:
+      - 5044:5044
+      - 50000:50000/tcp
+      - 50000:50000/udp
+      - 9600:9600
+    environment:
+      LS_JAVA_OPTS: -Xms256m -Xmx256m
+    depends_on:
+      - elasticsearch
+      - kafka-1
+      - kafka-2
+      - kafka-3
+
+  kibana:
+    build:
+      context: ./docker-elk/kibana/
+      args:
+        ELASTIC_VERSION: 8.5.2
+    volumes:
+      - type: bind
+        source: ./docker-elk/kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+
   zookeeper-1:
     hostname: zookeeper1
     image: confluentinc/cp-zookeeper:6.2.0
@@ -113,3 +207,6 @@ services:
                 bootstrap.servers: kafka1:19092,kafka2:29092,kafka3:39092
     ports:
       - 8080:8080
+
+volumes:
+    elasticsearch:
