@@ -1,16 +1,15 @@
 import datetime
-import time
-import os
 import logger
 
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium import webdriver
 
+
 # 현재 시각하는 시간 설정
 start_time = datetime.datetime.now()
 
 # 로그
-logging = logger.log()
+log = logger.log()
 
 option_chrome = webdriver.ChromeOptions()
 option_chrome.add_argument('headless')
@@ -33,23 +32,17 @@ option_chrome.add_experimental_option('prefs', prefs)
 
 # chromedriver_path
 web_driver = webdriver.Chrome(ChromeDriverManager().install(), options=option_chrome)
-data = web_driver.get("https://www.naver.com")
-
-def scroll_injection_around() -> None:
-   pass
 
 
+log.info(f"사이트 HTML 수집을 시작합니다.")
 class GoogleUtilityDriver:
    def __init__(self, driver=web_driver) -> None:
-      self.xpath = None
       self.url = f"https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page"
       self.driver = driver
    
    def page(self) -> None:
       self.driver.get(self.url)
       return self.driver.page_source
-      
+   
 
-if __name__ == "__main__":
-   a = GoogleUtilityDriver()
-   a.page()
+      
