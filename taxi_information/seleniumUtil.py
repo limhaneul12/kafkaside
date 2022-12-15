@@ -1,5 +1,5 @@
 import datetime
-import logger
+import create_log
 
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium import webdriver
@@ -9,7 +9,7 @@ from selenium import webdriver
 start_time = datetime.datetime.now()
 
 # 로그
-log = logger.log()
+log = create_log.log()
 
 option_chrome = webdriver.ChromeOptions()
 option_chrome.add_argument('headless')
@@ -40,7 +40,7 @@ class GoogleUtilityDriver:
       self.url = f"https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page"
       self.driver = driver
    
-   def page(self) -> None:
+   def page(self) -> str:
       self.driver.get(self.url)
       return self.driver.page_source
    
