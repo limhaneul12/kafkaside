@@ -133,6 +133,5 @@ dmypy.json
 /docker-elk/
 /taxi_information/data/*
 /taxi_information/data/
-/taxi_information/
 /kafka_ins/
 /kafka_ins
