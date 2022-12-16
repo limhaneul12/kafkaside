@@ -1,8 +1,9 @@
 import pandas as pd 
-import pathlib
+
 import os
+import pathlib
 import create_log
-from typing import Tuple
+
 
 burket: int = 0
 for i in (pathlib.Path(f"{os.getcwd()}/data/{i}") for i in range(1, 13)):
